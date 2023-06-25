@@ -29,6 +29,10 @@ fn is_range_fully_contained(range1: (usize, usize), range2: (usize, usize)) -> b
     range1.0 <= range2.0 && range1.1 >= range2.1
 }
 
+fn is_range_overlapping(range1: (usize, usize), range2: (usize, usize)) -> bool {
+    range1.1 >= range2.0 && range2.1 >= range1.0
+}
+
 fn count_fully_contained_pairs(assignment_pairs: &[SectionAssignmentPair]) -> usize {
     assignment_pairs
         .iter()
@@ -43,10 +47,8 @@ fn count_overlapping_pairs(assignment_pairs: &[SectionAssignmentPair]) -> usize 
     assignment_pairs
         .iter()
         .filter(|&pair| {
-            let (range1_start, range1_end) = pair.range1;
-            let (range2_start, range2_end) = pair.range2;
-            (range1_end >= range2_start && range2_end >= range1_start)
-                || (range2_end >= range1_start && range1_end >= range2_start)
+            is_range_overlapping(pair.range1, pair.range2)
+                || is_range_overlapping(pair.range2, pair.range1)
         })
         .count()
 }
