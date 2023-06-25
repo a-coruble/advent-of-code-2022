@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -47,7 +47,7 @@ fn group_lines_by_count(lines: Vec<String>, group_count: usize) -> Vec<Vec<Strin
     lines_grouped
 }
 
-/// Finds the unique character that is present in all the lines of the group, based on the provided scale.
+/// Finds the unique character that is present in all the lines of the group.
 ///
 /// # Arguments
 ///
@@ -57,34 +57,25 @@ fn group_lines_by_count(lines: Vec<String>, group_count: usize) -> Vec<Vec<Strin
 ///
 /// A vector containing the unique character that is present in all the lines of the group, or an empty vector if there is no common character.
 fn find_common_chars_in_group(group: &[String]) -> Vec<char> {
-    let mut common_chars: HashSet<char> = HashSet::new();
-    let mut unique_chars: HashSet<char> = HashSet::new();
+    let mut char_counts: HashMap<char, usize> = HashMap::new();
 
-    // Iterate over each line in the group
     for line in group {
         let line_chars: HashSet<char> = line.chars().collect();
 
-        // Add the characters from the first line to the unique_chars set
-        // The unique_chars set will be used as the initial reference set
-        if unique_chars.is_empty() {
-            unique_chars.extend(line_chars.iter().cloned());
-        } else {
-            // Remove characters from the unique_chars set that are not present in the current line
-            unique_chars.retain(|ch| line_chars.contains(ch));
+        for ch in line_chars {
+            *char_counts.entry(ch).or_insert(0) += 1;
         }
-
-        // Add all the characters from the line to the common_chars set
-        common_chars.extend(line_chars.iter().cloned());
     }
 
-    // Filter the common_chars set by removing characters that are not in the unique_chars set
-    common_chars.retain(|ch| unique_chars.contains(ch));
+    let mut common_chars: Vec<char> = char_counts
+        .iter()
+        .filter(|(_, count)| **count == group.len())
+        .map(|(&ch, _)| ch)
+        .collect();
 
-    // Convert the common_chars set into a sorted vector and return it
-    let mut result: Vec<char> = common_chars.into_iter().collect();
-    result.sort();
+    common_chars.sort();
 
-    result
+    common_chars
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -129,23 +120,23 @@ mod tests {
             String::from("ghi"),
         ];
         let common_chars = find_common_chars_in_group(&group);
-        assert_eq!(common_chars, vec!['a', 'b', 'c']);
-
-        let group = vec![
-            String::from("abc"),
-            String::from("def"),
-            String::from("xyz"),
-        ];
-        let common_chars = find_common_chars_in_group(&group);
         assert_eq!(common_chars, vec![]);
 
         let group = vec![
-            String::from("aabb"),
-            String::from("bbcc"),
-            String::from("ccdd"),
+            String::from("abd"),
+            String::from("abe"),
+            String::from("abe"),
         ];
         let common_chars = find_common_chars_in_group(&group);
-        assert_eq!(common_chars, vec!['b', 'c']);
+        assert_eq!(common_chars, vec!['a', 'b']);
+
+        let group = vec![
+            String::from("abc"),
+            String::from("dbf"),
+            String::from("gbi"),
+        ];
+        let common_chars = find_common_chars_in_group(&group);
+        assert_eq!(common_chars, vec!['b']);
     }
 
     #[test]
@@ -178,7 +169,7 @@ mod tests {
 
     #[test]
     fn test_read_lines_from_file() {
-        let result = read_lines_from_file("input.txt");
+        let result = read_lines_from_file("input.test.txt");
         assert!(result.is_ok());
 
         let lines = result.unwrap();
